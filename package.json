@@ -1,6 +1,6 @@
 {
   "name": "folio-gen",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "A CLI to generate portfolio",
   "bin": {
     "folio-gen": "bin/create-project.js"

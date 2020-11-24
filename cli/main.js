@@ -11,20 +11,24 @@ const access = promisify(fs.access);
 const copy = promisify(ncp);
 
 async function copyTemplateFiles(options) {
-  return copy(options.templateDirectory, options.targetDirectory, {
-    clobber: false
-  });
+  return copy(options.templateDirectory, options.targetDirectory);
 }
 
 async function modifyTemplateFiles(options) {
   import(path.join(process.cwd(), options.config))
     .then(res => {
       const userConfig = res.default;
+      const selectedTemplate = options.template.toLowerCase();
+      const splitTemplateName = selectedTemplate.split(' ');
+      const templateName = splitTemplateName.length > 1
+        ? splitTemplateName.join('-')
+        : selectedTemplate;
+
 
       const templateDir = path.resolve(
         new URL(import.meta.url).pathname,
         '../../templates',
-        options.template.toLowerCase().split(' ').join('-'),
+        templateName,
         'index.html'
       );
       const targetDirectory = path.resolve(
@@ -36,11 +40,13 @@ async function modifyTemplateFiles(options) {
       const designationToReplace = templateStrings.designation;
       const profilePhotoToReplace = templateStrings.profilePhoto;
       const socialToReplace = templateStrings.social;
+      const titleToReplace = templateStrings.title;
 
       const myNameRegex = new RegExp(myNameToReplace, "g");
       const designationRegex = new RegExp(designationToReplace, "g");
       const profilePhotoRegex = new RegExp(profilePhotoToReplace, "g");
       const socialRegex = new RegExp(socialToReplace, "g");
+      const titleRegex = new RegExp(titleToReplace, "g");
 
       fs.readFile(templateDir, 'utf8', function (err,data) {
         if (err) {
@@ -58,17 +64,14 @@ async function modifyTemplateFiles(options) {
           `;
         }
 
-        // console.log(data);
-        // console.log(myNameRegex);
-        // console.log(userConfig.myName);
-
         const result = data
           .replace(myNameRegex, userConfig.myName)
           .replace(designationRegex, userConfig.designation)
           .replace(profilePhotoRegex, userConfig.profilePhoto)
-          .replace(socialRegex, socialHtml);
+          .replace(socialRegex, socialHtml)
+          .replace(titleRegex, userConfig.websiteTitle);
 
-        fs.writeFile(targetDirectory, result, 'utf8', function (err) {
+        fs.writeFile(targetDirectory, result, 'utf8', (err) => {
           if (err) return console.log(err);
         });
       });
@@ -97,12 +100,12 @@ export async function createProject(options) {
 
   const tasks = new Listr([
     {
-      title: 'Modifying template',
-      task: () => modifyTemplateFiles(options),
-    },
-    {
       title: 'Copying template files',
       task: () => copyTemplateFiles(options),
+    },
+    {
+      title: 'Modifying template',
+      task: () => modifyTemplateFiles(options),
     }
   ]);
 

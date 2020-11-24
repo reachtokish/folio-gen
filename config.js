@@ -16,7 +16,8 @@ export const templateStrings = {
   myName: '{myName}',
   designation: '{designation}',
   profilePhoto: '{profilePhoto}',
-  social: '{social}'
+  social: '{social}',
+  title: '{title}'
 };
 
 export const icons = iconsList;
